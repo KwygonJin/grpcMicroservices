@@ -64,6 +64,8 @@ namespace ProductGrpc.Services
             _productContext.Products.Add(product);
             await _productContext.SaveChangesAsync();
 
+            _logger.LogInformation($"Product successfully added: {product.Name}_{product.ProductId}");
+
             var productModel = _mapper.Map<ProductModel>(product);
             productModel.Status = ProductStatus.Instock;
 
