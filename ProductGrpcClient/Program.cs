@@ -33,7 +33,7 @@ namespace ProductGrpcClient
         private static async Task InsertBulkProductAsync(ProductProtoService.ProductProtoServiceClient client)
         {
             Console.WriteLine("InsertBulkProductAsync started...");
-            using var clientBulk = client.InsertBulkProduct();
+            using var clientBulk = client.InsertBulkProductAsync();
             for (var i = 0; i < 3; i++)
             {
                 var productModel = new ProductModel
@@ -41,7 +41,7 @@ namespace ProductGrpcClient
                     Name = "Product " + i,
                     Description = "Bulk inserted product",
                     Price = 299,
-                    Status = ProductStatus.Instock,
+                    Status = ProductStatusEnum.Instock,
                     CreatedTime = Timestamp.FromDateTime(DateTime.UtcNow)
                 };
                 await clientBulk.RequestStream.WriteAsync(productModel);
@@ -58,7 +58,7 @@ namespace ProductGrpcClient
         private static async Task DeleteProductAsync(ProductProtoService.ProductProtoServiceClient client)
         {
             Console.WriteLine("DeleteProductAsync started...");
-            var response = await client.DeleteProductAsync(
+            var response = await client.DeleteProductAsyncAsync(
                 new DeleteProductRequest
                 {
                     ProductId = 3
@@ -70,7 +70,7 @@ namespace ProductGrpcClient
         private static async Task UpdateProductAsync(ProductProtoService.ProductProtoServiceClient client)
         {
             Console.WriteLine("UpdateProductAsync started...");
-            var response = await client.UpdateProductAsync(
+            var response = await client.UpdateProductAsyncAsync(
                 new UpdateProductRequest
                 {
                     Product = new ProductModel
@@ -79,7 +79,7 @@ namespace ProductGrpcClient
                         Name = "Red",
                         Description = "New Red Phone Mi10T",
                         Price = 999,
-                        Status = ProductStatus.Instock,
+                        Status = ProductStatusEnum.Instock,
                         CreatedTime = Timestamp.FromDateTime(DateTime.UtcNow)
                     }
                 }
@@ -90,7 +90,7 @@ namespace ProductGrpcClient
         private static async Task AddProductAsync(ProductProtoService.ProductProtoServiceClient client)
         {
             Console.WriteLine("AddProductAsync started...");
-            var response = await client.AddProductAsync(
+            var response = await client.AddProductAsyncAsync(
                 new AddProductRequest
                 {
                     Product = new ProductModel
@@ -98,7 +98,7 @@ namespace ProductGrpcClient
                         Name = "Red",
                         Description = "New Red Phone Mi10T",
                         Price = 999,
-                        Status = ProductStatus.Instock,
+                        Status = ProductStatusEnum.Instock,
                         CreatedTime = Timestamp.FromDateTime(DateTime.UtcNow)
                     }
                 }
@@ -121,7 +121,7 @@ namespace ProductGrpcClient
             //Console.WriteLine("GetAllProducts finished");
 
             Console.WriteLine("GetAllProducts C#9 started...");
-            using var clientData = client.GetAllProducts(new GetAllProductsRequest());
+            using var clientData = client.GetAllProductsAsync(new GetAllProductsRequest());
             await foreach (var responseData in clientData.ResponseStream.ReadAllAsync())
             {
                 Console.WriteLine(responseData);
@@ -133,7 +133,7 @@ namespace ProductGrpcClient
         private static async Task GetProductAsync(ProductProtoService.ProductProtoServiceClient client)
         {
             Console.WriteLine("GetProductAsync started...");
-            var response = await client.GetProductAsync(
+            var response = await client.GetProductAsyncAsync(
                 new GetProductRequest
                 {
                     ProductId = 1

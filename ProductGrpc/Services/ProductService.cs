@@ -7,7 +7,8 @@ using Microsoft.Extensions.Logging;
 using ProductGrpc.Data;
 using ProductGrpc.Models;
 using ProductGrpc.Protos;
-using ProductStatus = ProductGrpc.Protos.ProductStatus;
+using ProductStatusEnumModel = ProductGrpc.Models.ProductStatusEnum;
+using ProductStatusEnumProto = ProductGrpc.Protos.ProductStatusEnum;
 
 namespace ProductGrpc.Services
 {
@@ -29,7 +30,7 @@ namespace ProductGrpc.Services
             return base.Test(request, context);
         }
 
-        public override async Task<ProductModel> GetProduct(GetProductRequest request, ServerCallContext context)
+        public override async Task<ProductModel> GetProductAsync(GetProductRequest request, ServerCallContext context)
         {
             var product = await _productContext.Products.FindAsync(request.ProductId);
             if (product == null)
@@ -39,27 +40,27 @@ namespace ProductGrpc.Services
             }
 
             var productModel = _mapper.Map<ProductModel>(product);
-            productModel.Status = ProductStatus.Instock;
+            productModel.Status = ProductStatusEnumProto.Instock;
 
             return productModel;
         }
 
-        public override async Task GetAllProducts(GetAllProductsRequest request,
+        public override async Task GetAllProductsAsync(GetAllProductsRequest request,
             IServerStreamWriter<ProductModel> responseStream, ServerCallContext context)
         {
             var productList = await _productContext.Products.ToListAsync();
             foreach (var product in productList)
             {
                 var productModel = _mapper.Map<ProductModel>(product);
-                productModel.Status = ProductStatus.Instock;
+                productModel.Status = ProductStatusEnumProto.Instock;
                 await responseStream.WriteAsync(productModel);
             }
         }
 
-        public override async Task<ProductModel> AddProduct(AddProductRequest request, ServerCallContext context)
+        public override async Task<ProductModel> AddProductAsync(AddProductRequest request, ServerCallContext context)
         {
             var product = _mapper.Map<Product>(request.Product);
-            product.Status = Models.ProductStatus.INSTOCK;
+            product.StatusEnum = ProductStatusEnumModel.INSTOCK;
 
             _productContext.Products.Add(product);
             await _productContext.SaveChangesAsync();
@@ -67,12 +68,13 @@ namespace ProductGrpc.Services
             _logger.LogInformation($"Product successfully added: {product.Name}_{product.ProductId}");
 
             var productModel = _mapper.Map<ProductModel>(product);
-            productModel.Status = ProductStatus.Instock;
+            productModel.Status = ProductStatusEnumProto.Instock;
 
             return productModel;
         }
 
-        public override async Task<ProductModel> UpdateProduct(UpdateProductRequest request, ServerCallContext context)
+        public override async Task<ProductModel> UpdateProductAsync(UpdateProductRequest request,
+            ServerCallContext context)
         {
             var product = _mapper.Map<Product>(request.Product);
 
@@ -90,7 +92,7 @@ namespace ProductGrpc.Services
             return productModel;
         }
 
-        public override async Task<DeleteProductResponse> DeleteProduct(DeleteProductRequest request,
+        public override async Task<DeleteProductResponse> DeleteProductAsync(DeleteProductRequest request,
             ServerCallContext context)
         {
             var product = await _productContext.Products.FindAsync(request.ProductId);
@@ -111,7 +113,7 @@ namespace ProductGrpc.Services
             return response;
         }
 
-        public override async Task<InsertBulkProductResponse> InsertBulkProduct(
+        public override async Task<InsertBulkProductResponse> InsertBulkProductAsync(
             IAsyncStreamReader<ProductModel> requestStream,
             ServerCallContext context)
         {

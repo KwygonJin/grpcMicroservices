@@ -28,7 +28,7 @@ namespace ProductWorkerService
                     Name = productName,
                     Description = $"{productName}_Description",
                     Price = new Random().Next(1000),
-                    Status = ProductStatus.Instock,
+                    Status = ProductStatusEnum.Instock,
                     CreatedTime = Timestamp.FromDateTime(DateTime.UtcNow)
                 }
             };

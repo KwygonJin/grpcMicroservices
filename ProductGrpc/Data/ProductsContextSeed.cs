@@ -19,7 +19,7 @@ namespace ProductGrpc.Data
                         Name = "Mi10T",
                         Description = "New Xiaomi Phone Mi10T",
                         Price = 699,
-                        Status = ProductStatus.INSTOCK,
+                        StatusEnum = ProductStatusEnum.INSTOCK,
                         CreatedTime = DateTime.UtcNow
                     },
                     new()
@@ -28,7 +28,7 @@ namespace ProductGrpc.Data
                         Name = "P40",
                         Description = "New Huawei Phone P40",
                         Price = 899,
-                        Status = ProductStatus.INSTOCK,
+                        StatusEnum = ProductStatusEnum.INSTOCK,
                         CreatedTime = DateTime.UtcNow
                     },
                     new()
@@ -37,7 +37,7 @@ namespace ProductGrpc.Data
                         Name = "A50",
                         Description = "New Samsung Phone A50",
                         Price = 699,
-                        Status = ProductStatus.INSTOCK,
+                        StatusEnum = ProductStatusEnum.INSTOCK,
                         CreatedTime = DateTime.UtcNow
                     }
                 };

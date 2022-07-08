@@ -6,14 +6,14 @@ import "google/protobuf/Timestamp.proto";
 import "google/protobuf/Empty.proto";
 
 service ProductProtoService{
-	rpc GetProduct(GetProductRequest) returns (ProductModel);
-	rpc GetAllProducts(GetAllProductsRequest) returns (stream ProductModel);
+	rpc GetProductAsync(GetProductRequest) returns (ProductModel);
+	rpc GetAllProductsAsync(GetAllProductsRequest) returns (stream ProductModel);
 
-	rpc AddProduct(AddProductRequest) returns (ProductModel);
-	rpc UpdateProduct(UpdateProductRequest) returns (ProductModel);
-	rpc DeleteProduct(DeleteProductRequest) returns (DeleteProductResponse);
+	rpc AddProductAsync(AddProductRequest) returns (ProductModel);
+	rpc UpdateProductAsync(UpdateProductRequest) returns (ProductModel);
+	rpc DeleteProductAsync(DeleteProductRequest) returns (DeleteProductResponse);
 
-	rpc InsertBulkProduct (stream ProductModel) returns (InsertBulkProductResponse);
+	rpc InsertBulkProductAsync (stream ProductModel) returns (InsertBulkProductResponse);
 	rpc Test(google.protobuf.Empty) returns (google.protobuf.Empty);
 }
 
@@ -50,11 +50,11 @@ message ProductModel{
 	string name = 2;
 	string description = 3;
 	float price = 4;
-	ProductStatus status = 5;
+	ProductStatusEnum status = 5;
 	google.protobuf.Timestamp createdTime = 6;
 }
 
-enum ProductStatus{
+enum ProductStatusEnum{
 	INSTOCK = 0;
     LOW = 1;
     NONE = 2;
