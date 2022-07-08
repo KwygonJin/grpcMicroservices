@@ -11,13 +11,11 @@ namespace DiscountGrpc.Services
     public class DiscountService : DiscountProtoService.DiscountProtoServiceBase
     {
         private readonly ILogger<DiscountService> _logger;
-        private readonly DiscountContext _discountContext;
         private readonly IMapper _mapper;
 
-        public DiscountService(ILogger<DiscountService> logger, DiscountContext context, IMapper mapper)
+        public DiscountService(ILogger<DiscountService> logger, IMapper mapper)
         {
             _logger = logger;
-            _discountContext = context;
             _mapper = mapper;
         }
 

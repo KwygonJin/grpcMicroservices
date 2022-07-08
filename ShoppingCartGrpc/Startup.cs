@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Builder;
+﻿using System;
+using DiscountGrpc.Protos;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using ShoppingCartGrpc.Data;
@@ -11,11 +14,24 @@ namespace ShoppingCartGrpc
 {
     public class Startup
     {
+        public Startup(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public IConfiguration Configuration { get; }
+
         // This method gets called by the runtime. Use this method to add services to the container.
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddGrpc(opt => { opt.EnableDetailedErrors = true; });
+
+            services.AddGrpcClient<DiscountProtoService.DiscountProtoServiceClient>(opt =>
+                opt.Address = new Uri(Configuration["GrpcConfig:DiscountUrl"])
+            );
+
+            services.AddScoped<DiscountService>();
 
             services.AddDbContext<ShoppingCartContext>(options =>
                 options.UseInMemoryDatabase("ShoppingCart")
@@ -37,6 +53,7 @@ namespace ShoppingCartGrpc
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapGrpcService<ShoppingCartService>();
+
 
                 endpoints.MapGet("/",
                     async context =>
