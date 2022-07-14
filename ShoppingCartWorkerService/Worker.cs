@@ -1,8 +1,10 @@
 using System;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Grpc.Core;
 using Grpc.Net.Client;
+using IdentityModel.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -32,7 +34,9 @@ namespace ShoppingCartWorkerService
                     (_configuration.GetValue<string>("WorkerService:ShoppingCartServerUrl"));
                 var scClient = new ShoppingCartProtoService.ShoppingCartProtoServiceClient(scChannel);
 
-                var shoppingCart = await GetOrCreateShoppingCartAsync(scClient);
+                var token = await GetTokenFromIS4();
+
+                var shoppingCart = await GetOrCreateShoppingCartAsync(scClient, token);
 
                 using var scClientStream = scClient.AddItemIntoShoppingCartAsync();
 
@@ -71,18 +75,55 @@ namespace ShoppingCartWorkerService
             }
         }
 
+        private async Task<string> GetTokenFromIS4()
+        {
+            var client = new HttpClient();
+            var disco = await client.GetDiscoveryDocumentAsync(
+                _configuration.GetValue<string>("WorkerService:IdentityServerUrl"));
+
+            if (disco.IsError)
+            {
+                Console.WriteLine(disco.Error);
+                return string.Empty;
+            }
+
+            var tokenResponse = await client.RequestClientCredentialsTokenAsync(
+                new ClientCredentialsTokenRequest
+                {
+                    Address = disco.TokenEndpoint,
+                    ClientId = "ShoppingCartClient",
+                    ClientSecret = "secret",
+                    Scope = "ShoppingCartAPI"
+                }
+            );
+
+            if (tokenResponse.IsError)
+            {
+                Console.WriteLine(tokenResponse.Error);
+                return string.Empty;
+            }
+
+            return tokenResponse.AccessToken;
+        }
+
         private async Task<ShoppingCartModel> GetOrCreateShoppingCartAsync(
-            ShoppingCartProtoService.ShoppingCartProtoServiceClient scClient)
+            ShoppingCartProtoService.ShoppingCartProtoServiceClient scClient,
+            string token)
         {
             ShoppingCartModel shoppingCartModel;
+            var headers = new Metadata();
+            headers.Add("Authorization", $"Bearer  {token}");
+
             try
             {
                 _logger.LogInformation("GetShoppingCartAsyncAsync started...");
+
                 shoppingCartModel =
                     await scClient.GetShoppingCartAsyncAsync(new GetShoppingCartRequest
-                    {
-                        Username = _configuration.GetValue<string>("WorkerService:UserName")
-                    });
+                        {
+                            Username = _configuration.GetValue<string>("WorkerService:UserName")
+                        },
+                        headers);
                 _logger.LogInformation("GetOrCreateShoppingCartAsync successfully...");
             }
             catch (RpcException ex)
@@ -91,9 +132,10 @@ namespace ShoppingCartWorkerService
                 {
                     _logger.LogInformation("CreateShoppingCartAsyncAsync started...");
                     shoppingCartModel = await scClient.CreateShoppingCartAsyncAsync(new ShoppingCartModel
-                    {
-                        Username = _configuration.GetValue<string>("WorkerService:UserName")
-                    });
+                        {
+                            Username = _configuration.GetValue<string>("WorkerService:UserName")
+                        },
+                        headers);
                     _logger.LogInformation("CreateShoppingCartAsyncAsync successfully...");
                 }
                 else

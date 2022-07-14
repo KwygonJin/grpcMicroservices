@@ -1,0 +1,22 @@
+﻿@using WebInterfaceDemoGRPC.ViewModels
+@using System.Globalization
+@model WebInterfaceDemoGRPC.ViewModels.ProductListViewModel
+
+<h1>All products:</h1>
+
+<div class="row mt-5 mb-2">
+	@{
+		foreach (ProductViewModel product in Model.AllProducts)
+		{
+			<di class="col-lg-4">
+				<h2>@product.Name</h2>
+				<p>@product.Description</p>
+				<p>Status: @product.StatusEnum.ToString()</p>
+				<p>Price: @product.Price.ToString("c", new CultureInfo("en-US"))</p>
+				<p><a class="btn btn-warning" asp-controller="Products" asp-action="AddProductToCart" asp-route-productId=@product.ProductId>Buy</a></p>
+			</di>
+		}
+	}
+</div>
+
+<p><a class="btn btn-primary" asp-controller="Products" asp-action="Add" >Add product</a></p>

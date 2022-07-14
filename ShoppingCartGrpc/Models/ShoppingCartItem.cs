@@ -8,5 +8,8 @@
         public float Price { get; set; }
         public int ProductId { get; set; }
         public string ProductName { get; set; }
+
+        public int ShoppingCartId { get; set; }
+        public ShoppingCart ShoppingCart { get; set; }
     }
 }

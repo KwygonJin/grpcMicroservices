@@ -10,7 +10,7 @@ namespace ShoppingCartGrpc
         public static void Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
-            SeedDatabase(host);
+            //SeedDatabase(host);
             host.Run();
         }
 

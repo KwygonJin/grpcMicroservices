@@ -1,0 +1,22 @@
+﻿<h3>New product</h3>
+<form method="post">
+	<table>
+		<tr>
+			<td>Name: </td>
+			<td><input type="text" id="Name" name="Name" /></td>
+		</tr>
+		<tr>
+			<td>Description: </td>
+			<td><input type="text" id="Description" name="Description" /></td>
+		</tr>
+		<tr>
+			<td>Price: </td>
+			<td><input type="number" id="Price" name="Price" /></td>
+		</tr>
+		<tr>
+			<td></td>
+			<td><input type="submit" value="Add product to db" class="btn btn-primary" asp-controller="Products" asp-action="AddProductToDb" /></td>
+		</tr>
+	</table>
+	<hr />
+</form>

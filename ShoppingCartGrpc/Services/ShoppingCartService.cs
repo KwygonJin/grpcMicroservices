@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using AutoMapper;
 using Grpc.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using ShoppingCartGrpc.Data;
@@ -10,6 +11,7 @@ using ShoppingCartGrpc.Protos;
 
 namespace ShoppingCartGrpc.Services
 {
+    [Authorize]
     public class ShoppingCartService : ShoppingCartProtoService.ShoppingCartProtoServiceBase
     {
         private readonly ILogger<ShoppingCartService> _logger;
@@ -30,7 +32,9 @@ namespace ShoppingCartGrpc.Services
             ServerCallContext context)
         {
             var shoppingCart =
-                await _shoppingCartContext.ShoppingCarts.FirstOrDefaultAsync(s => s.UserName == request.Username);
+                await _shoppingCartContext.ShoppingCarts
+                    .Include(sc => sc.Items)
+                    .FirstOrDefaultAsync(s => s.UserName == request.Username);
             if (shoppingCart == null)
             {
                 throw new RpcException(new Status(StatusCode.NotFound,
@@ -38,22 +42,24 @@ namespace ShoppingCartGrpc.Services
             }
 
             var shoppingCartModel = _mapper.Map<ShoppingCartModel>(shoppingCart);
+            shoppingCartModel.Items.Clear();
+            shoppingCartModel.Items.Add(shoppingCart.Items.Select(i => _mapper.Map<ShoppingCartItemModel>(i)).ToList());
             return shoppingCartModel;
         }
 
         public override async Task<ShoppingCartModel> CreateShoppingCartAsync(ShoppingCartModel request,
             ServerCallContext context)
         {
+            ShoppingCartModel shoppingCartModel;
+
             var shoppingCart = _mapper.Map<ShoppingCart>(request);
             var isExist = await _shoppingCartContext.ShoppingCarts
                 .AnyAsync(s => s.UserName == shoppingCart.UserName);
 
-            if (!isExist)
+            if (isExist)
             {
-                _logger.LogError("Invalid Username for Shopping cart creation. UserName : {userName}",
-                    shoppingCart.UserName);
-                throw new RpcException(new Status(StatusCode.NotFound,
-                    $"Shopping cart with User={request.Username} is not found!"));
+                shoppingCartModel = _mapper.Map<ShoppingCartModel>(shoppingCart);
+                return shoppingCartModel;
             }
 
             _shoppingCartContext.ShoppingCarts.Add(shoppingCart);
@@ -62,10 +68,11 @@ namespace ShoppingCartGrpc.Services
             _logger.LogInformation("Shopping cart is successfully created for UserName : {userName}",
                 shoppingCart.UserName);
 
-            var shoppingCartModel = _mapper.Map<ShoppingCartModel>(shoppingCart);
+            shoppingCartModel = _mapper.Map<ShoppingCartModel>(shoppingCart);
             return shoppingCartModel;
         }
 
+        [AllowAnonymous]
         public override async Task<RemoveItemIntoShoppingCartResponse> RemoveItemIntoShoppingCartAsync
             (RemoveItemIntoShoppingCartRequest request, ServerCallContext context)
         {
@@ -79,8 +86,9 @@ namespace ShoppingCartGrpc.Services
                     $"Shopping cart with User={request.Username} is not found!"));
             }
 
-            var removeCartItem =
-                shoppingCart.Items.FirstOrDefault(i => i.ProductId == request.RemoveCartItem.ProductId);
+            var removeCartItem = await _shoppingCartContext.ShoppingCartItems
+                .FirstOrDefaultAsync(i => i.ProductId == request.RemoveCartItem.ProductId
+                                          && i.ShoppingCartId == shoppingCart.Id);
             if (removeCartItem == null)
             {
                 _logger.LogError("Cart item with ProductId={ProductId} is not found!",
@@ -89,7 +97,7 @@ namespace ShoppingCartGrpc.Services
                     $"Cart item with ProductId={request.RemoveCartItem.ProductId} is not found!"));
             }
 
-            shoppingCart.Items.Remove(removeCartItem);
+            _shoppingCartContext.ShoppingCartItems.Remove(removeCartItem);
             var removeCount = await _shoppingCartContext.SaveChangesAsync();
 
             return new RemoveItemIntoShoppingCartResponse
@@ -98,6 +106,7 @@ namespace ShoppingCartGrpc.Services
             };
         }
 
+        [AllowAnonymous]
         public override async Task<AddItemIntoShoppingCartResponse> AddItemIntoShoppingCartAsync
             (IAsyncStreamReader<AddItemIntoShoppingCartRequest> requestStream, ServerCallContext context)
         {
@@ -116,7 +125,9 @@ namespace ShoppingCartGrpc.Services
 
                 var newAddedCartItem = _mapper.Map<ShoppingCartItem>(requestStream.Current.NewCartItem);
 
-                var cartItem = shoppingCart.Items.FirstOrDefault(i => i.ProductId == newAddedCartItem.ProductId);
+                var cartItem = await _shoppingCartContext.ShoppingCartItems
+                    .FirstOrDefaultAsync(i => i.ProductId == newAddedCartItem.ProductId
+                                              && i.ShoppingCartId == shoppingCart.Id);
                 if (cartItem != null)
                 {
                     cartItem.Quantity++;
@@ -125,8 +136,9 @@ namespace ShoppingCartGrpc.Services
                 {
                     var discount = await _discountService.GetDiscountAsync(requestStream.Current.DiscountCode);
                     newAddedCartItem.Price -= discount.Amount;
+                    newAddedCartItem.ShoppingCartId = shoppingCart.Id;
 
-                    shoppingCart.Items.Add(newAddedCartItem);
+                    _shoppingCartContext.ShoppingCartItems.Add(newAddedCartItem);
                 }
             }
 

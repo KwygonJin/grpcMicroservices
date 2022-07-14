@@ -1,0 +1,63 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@using System.Globalization
+@model WebInterfaceDemoGRPC.ViewModels.ShoppingCartViewModel
+
+<h1>Shopping Cart</h1>
+
+<p>@Model.UserName</p>
+
+<table class="table table-hover">
+	<thead class="table-secondary">
+	<tr>
+		<th>#</th>
+		<th>Name</th>
+		<th>Quantity</th>
+		<th>Price</th>
+		<th>Sum</th>
+		<th></th>
+	</tr>
+	</thead>
+	<tbody>
+	@{ int rowNo = 1; }
+	@foreach (var item in Model.Items)
+	{
+		<tr>
+			<th>
+				@(rowNo++)
+			</th>
+			<td>
+				@item.ProductName
+			</td>
+			<td>
+				@item.Quantity
+			</td>
+			<td>
+				@item.Price.ToString("c", new CultureInfo("en-US"))
+			</td>
+			<td>
+				@item.Sum.ToString("c", new CultureInfo("en-US"))
+			</td>
+			<td>
+				<a asp-controller="ShopCart" asp-action="Delete" asp-route-productId=@item.ProductId>Delete</a>
+			</td>
+		</tr>
+	}
+
+	<tr class="table-secondary">
+		<td>
+		</td>
+		<td>
+		</td>
+		<td>
+		</td>
+		<th>
+			Total:
+		</th>
+		<th>
+			@Model.Items.Sum(i => i.Sum).ToString("c", new CultureInfo("en-US"))
+		</th>
+		<td>
+		</td>
+	</tr>
+	</tbody>
+</table>
